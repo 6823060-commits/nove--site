@@ -48,6 +48,12 @@ export default async function Header() {
                 </Link>
               )}
               <Link
+  href="/tickets"
+  className="text-sm text-mist transition hover:text-ember"
+>
+  Хүсэлт
+</Link>
+              <Link
                 href="/profile"
                 className="text-sm text-mist transition hover:text-ember"
               >
