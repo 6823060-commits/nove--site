@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+@import "@fontsource/playfair-display/cyrillic-600.css";
+@import "@fontsource/playfair-display/cyrillic-700.css";
+@import "@fontsource/playfair-display/cyrillic-900.css";
+@import "@fontsource/playfair-display/cyrillic-600-italic.css";
+
+@import "@fontsource/inter/cyrillic-400.css";
+@import "@fontsource/inter/cyrillic-500.css";
+@import "@fontsource/inter/cyrillic-600.css";
+@import "@fontsource/inter/cyrillic-700.css";
+
+@import "@fontsource/noto-serif/cyrillic-400.css";
+@import "@fontsource/noto-serif/cyrillic-400-italic.css";
+@import "@fontsource/noto-serif/cyrillic-700.css";
+
+:root {
+  --color-ink: #15131f;
+  --color-ink-deep: #0d0c14;
+  --color-surface: #1e1a2b;
+  --color-surface-raised: #262238;
+  --color-ember: #e2a33b;
+  --color-ember-soft: #f0c372;
+  --color-ember-dim: #a87526;
+  --color-plum: #8273ad;
+  --color-plum-soft: #ada1cf;
+  --color-paper: #f2eee3;
+  --color-mist: #9c96b0;
+  --color-mist-dim: #6e6884;
+  --color-border: #322c46;
+  --color-danger: #d9685b;
+  --color-success: #6fae8c;
+}
+
+@theme inline {
+  --color-ink: var(--color-ink);
+  --color-ink-deep: var(--color-ink-deep);
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-ember: var(--color-ember);
+  --color-ember-soft: var(--color-ember-soft);
+  --color-ember-dim: var(--color-ember-dim);
+  --color-plum: var(--color-plum);
+  --color-plum-soft: var(--color-plum-soft);
+  --color-paper: var(--color-paper);
+  --color-mist: var(--color-mist);
+  --color-mist-dim: var(--color-mist-dim);
+  --color-border: var(--color-border);
+  --color-danger: var(--color-danger);
+  --color-success: var(--color-success);
+
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-reading: "Noto Serif", Georgia, serif;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-ember);
+  color: var(--color-ink-deep);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ink);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-raised);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ember-dim);
+}
+
+.glow-lamp {
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 0%,
+    rgba(226, 163, 59, 0.22) 0%,
+    rgba(226, 163, 59, 0.06) 45%,
+    transparent 75%
+  );
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+.flicker {
+  animation: flicker 4s ease-in-out infinite;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ember);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
