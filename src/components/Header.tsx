@@ -7,6 +7,7 @@ export default async function Header() {
   const user = session?.user;
 
   const navLinks = [
+    { href: "/catalog", label: "Каталог" },
     { href: "/novels", label: "Бүх новелууд" },
     { href: "/novels?status=ONGOING", label: "Үргэлжилж буй" },
     { href: "/novels?status=COMPLETED", label: "Дууссан" },
@@ -48,11 +49,11 @@ export default async function Header() {
                 </Link>
               )}
               <Link
-  href="/tickets"
-  className="text-sm text-mist transition hover:text-ember"
->
-  Хүсэлт
-</Link>
+                href="/tickets"
+                className="text-sm text-mist transition hover:text-ember"
+              >
+                Хүсэлт
+              </Link>
               <Link
                 href="/profile"
                 className="text-sm text-mist transition hover:text-ember"

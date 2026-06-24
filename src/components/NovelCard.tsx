@@ -23,7 +23,55 @@ const statusColor: Record<NovelCardData["status"], string> = {
   HIATUS: "text-mist border-border bg-surface",
 };
 
-export default function NovelCard({ novel }: { novel: NovelCardData }) {
+export default function NovelCard({
+  novel,
+  compact = false,
+}: {
+  novel: NovelCardData;
+  compact?: boolean;
+}) {
+  if (compact) {
+    return (
+      <Link
+        href={`/novels/${novel.slug}`}
+        className="group relative overflow-hidden rounded-xl border border-border bg-surface transition hover:border-ember-dim"
+      >
+        {/* Cover */}
+        <div className="relative aspect-[2/3] w-full overflow-hidden bg-gradient-to-br from-plum/40 to-ink-deep">
+          {novel.coverImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={novel.coverImage}
+              alt={novel.title}
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <span className="font-display text-4xl text-paper/60">
+                {novel.title.charAt(0)}
+              </span>
+            </div>
+          )}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-ink-deep via-ink-deep/20 to-transparent" />
+          {/* Status badge */}
+          <span
+            className={`absolute left-2 top-2 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${statusColor[novel.status]}`}
+          >
+            {statusLabel[novel.status]}
+          </span>
+          {/* Chapter badge */}
+          <div className="absolute bottom-0 left-0 right-0 px-2 pb-2">
+            <p className="font-display text-xs font-semibold text-paper line-clamp-2 group-hover:text-ember transition">
+              {novel.title}
+            </p>
+            <p className="mt-0.5 text-[10px] text-mist-dim">{novel.chapterCount} бүлэг</p>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
   return (
     <Link
       href={`/novels/${novel.slug}`}
