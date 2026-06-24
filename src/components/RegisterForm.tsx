@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { GoogleIcon, AppleIcon, FacebookIcon } from "@/components/SocialIcons";
+import { checkPasswordStrength } from "@/lib/password";
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
@@ -150,7 +151,7 @@ export default function RegisterForm({ providers }: { providers: EnabledProvider
               id="password"
               type={showPassword ? "text" : "password"}
               required
-              minLength={6}
+              minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Нууц үг"
@@ -165,6 +166,30 @@ export default function RegisterForm({ providers }: { providers: EnabledProvider
               <EyeIcon open={showPassword} />
             </button>
           </div>
+          {password.length > 0 && (() => {
+            const { score, checks } = checkPasswordStrength(password);
+            const colors = ["bg-danger", "bg-danger", "bg-ember", "bg-ember-soft", "bg-success"];
+            const labels = ["", "Маш сул", "Сул", "Дунд", "Хүчтэй"];
+            return (
+              <div className="mt-2">
+                <div className="flex gap-1">
+                  {[1,2,3,4].map((i) => (
+                    <div key={i} className={`h-1 flex-1 rounded-full transition-all ${score >= i ? colors[score] : "bg-border"}`} />
+                  ))}
+                </div>
+                <p className={`mt-1 text-xs ${score >= 4 ? "text-success" : score >= 3 ? "text-ember" : "text-danger"}`}>
+                  {labels[score]}
+                </p>
+                <ul className="mt-1.5 grid grid-cols-2 gap-0.5">
+                  {checks.map((c) => (
+                    <li key={c.label} className={`text-xs flex items-center gap-1 ${c.pass ? "text-success" : "text-mist-dim"}`}>
+                      {c.pass ? "✓" : "○"} {c.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
         </div>
 
         <div>

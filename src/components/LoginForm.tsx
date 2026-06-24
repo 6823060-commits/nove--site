@@ -36,7 +36,15 @@ export default function LoginForm({ providers }: { providers: EnabledProviders }
     setLoading(false);
 
     if (res?.error) {
-      setError("Имэйл эсвэл нууц үг буруу байна");
+      if (res.error.includes("LOCKED:")) {
+        const mins = res.error.split(":")[1];
+        setError(`Таны бүртгэл ${mins} минутын турш блоклогдлоо. Дараа дахин оролдоно уу.`);
+      } else if (res.error.includes("ATTEMPTS:")) {
+        const attempts = Number(res.error.split(":")[1]);
+        setError(`Нууц үг буруу байна. ${5 - attempts} оролдлого үлдсэн байна.`);
+      } else {
+        setError("Имэйл эсвэл нууц үг буруу байна");
+      }
       return;
     }
 
@@ -58,7 +66,6 @@ export default function LoginForm({ providers }: { providers: EnabledProviders }
           onChange={(e) => setEmail(e.target.value)}
           className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-paper focus:border-ember focus:outline-none"
           placeholder="та@жишээ.мн"
-          data-has-listeners="true"
         />
       </div>
       <div>
@@ -73,10 +80,21 @@ export default function LoginForm({ providers }: { providers: EnabledProviders }
           onChange={(e) => setPassword(e.target.value)}
           className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-paper focus:border-ember focus:outline-none"
           placeholder="••••••••"
-          data-has-listeners="true"
         />
       </div>
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && (
+        <div className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3">
+          <p className="text-sm text-danger">{error}</p>
+          {error.includes("блоклогдлоо") || error.includes("буруу байна") ? (
+            <a
+              href="/forgot-password"
+              className="mt-1 block text-xs text-ember hover:underline"
+            >
+              Нууц үгээ мартсан уу?
+            </a>
+          ) : null}
+        </div>
+      )}
       <button
         type="submit"
         disabled={loading}

@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               href="/admin/novels"
               className="whitespace-nowrap rounded-lg px-3 py-2 text-sm text-mist transition hover:bg-surface hover:text-ember"
             >
-              Туужууд
+              Новелууд
             </Link>
             <Link
               href="/"

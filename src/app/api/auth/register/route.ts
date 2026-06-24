@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { passwordSchema } from "@/lib/password";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Нэр дор хаяж 2 тэмдэгт байх ёстой"),
   email: z.string().email("Имэйл хаяг буруу байна"),
-  password: z.string().min(6, "Нууц үг дор хаяж 6 тэмдэгт байх ёстой"),
+  password: passwordSchema,
 });
 
 export async function POST(request: Request) {

@@ -20,6 +20,12 @@ export default function LoginPage() {
           <LoginForm providers={providers} />
         </Suspense>
         <p className="mt-6 text-center text-sm text-mist">
+          Нууц үгээ мартсан уу?{" "}
+          <Link href="/forgot-password" className="text-ember hover:underline">
+            Сэргээх
+          </Link>
+        </p>
+        <p className="mt-2 text-center text-sm text-mist">
           Бүртгэлгүй юу?{" "}
           <Link href="/register" className="text-ember hover:underline">
             Бүртгүүлэх

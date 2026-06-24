@@ -43,8 +43,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user || !user.passwordHash) return null;
 
+        // Check if account is locked
+        if (user.lockedUntil && user.lockedUntil > new Date()) {
+          const minutesLeft = Math.ceil(
+            (user.lockedUntil.getTime() - Date.now()) / 60000
+          );
+          throw new Error(`LOCKED:${minutesLeft}`);
+        }
+
         const isValid = await bcrypt.compare(password, user.passwordHash);
-        if (!isValid) return null;
+
+        if (!isValid) {
+          const newAttempts = (user.loginAttempts ?? 0) + 1;
+          const shouldLock = newAttempts >= 5;
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              loginAttempts: newAttempts,
+              lockedUntil: shouldLock
+                ? new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+                : null,
+            },
+          });
+          if (shouldLock) throw new Error("LOCKED:15");
+          throw new Error(`ATTEMPTS:${newAttempts}`);
+        }
+
+        // Success — reset attempts
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { loginAttempts: 0, lockedUntil: null },
+        });
 
         return {
           id: user.id,

@@ -25,17 +25,33 @@ model User {
   image         String?
   passwordHash  String?
   role          Role      @default(USER)
+  loginAttempts Int       @default(0)
+  lockedUntil   DateTime?
   createdAt     DateTime  @default(now())
 
-  accounts      Account[]
-  sessions      Session[]
-  favorites     Favorite[]
-  comments      Comment[]
-  progress      ReadingProgress[]
-  createdNovels Novel[]           @relation("NovelCreator")
-  tickets       Ticket[]
+  accounts           Account[]
+  sessions           Session[]
+  favorites          Favorite[]
+  comments           Comment[]
+  progress           ReadingProgress[]
+  createdNovels      Novel[]           @relation("NovelCreator")
+  tickets            Ticket[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expires   DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@map("password_reset_tokens")
 }
 
 model Account {

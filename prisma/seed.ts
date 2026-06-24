@@ -63,7 +63,7 @@ async function main() {
     genres[name] = await prisma.genre.create({ data: { name, slug: genreSlugs[name] } });
   }
 
-  console.log("Туужууд болон бүлгүүдийг үүсгэж байна...");
+  console.log("Новелууд болон бүлгүүдийг үүсгэж байна...");
 
   await prisma.novel.create({
     data: {

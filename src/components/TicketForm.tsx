@@ -7,7 +7,7 @@ const typeOptions = [
   { value: "BUG", label: "Алдаа засах", icon: "🐛" },
   { value: "FEATURE", label: "Нэмэлт өөрчлөлт", icon: "✨" },
   { value: "AUTHOR_REQUEST", label: "Зохиолч болох хүсэлт", icon: "✍️" },
-  { value: "NOVEL_REQUEST", label: "Тууж нэмэх хүсэлт", icon: "📖" },
+  { value: "NOVEL_REQUEST", label: "Новел нэмэх хүсэлт", icon: "📖" },
   { value: "OTHER", label: "Бусад", icon: "💬" },
 ];
 
