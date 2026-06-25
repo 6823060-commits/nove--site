@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import FavoriteButton from "@/components/FavoriteButton";
+import ReadingStatusButton from "@/components/ReadingStatusButton";
 import CommentSection from "@/components/CommentSection";
 
 const statusLabel: Record<string, string> = {
@@ -55,7 +56,7 @@ export default async function NovelDetailPage({
 
   prisma.novel.update({ where: { id: novel.id }, data: { views: { increment: 1 } } }).catch(() => {});
 
-  const [isFavorited, progress] = await Promise.all([
+  const [isFavorited, progress, readingListItem] = await Promise.all([
     session?.user
       ? prisma.favorite.findUnique({
           where: { userId_novelId: { userId: session.user.id, novelId: novel.id } },
@@ -65,6 +66,12 @@ export default async function NovelDetailPage({
       ? prisma.readingProgress.findUnique({
           where: { userId_novelId: { userId: session.user.id, novelId: novel.id } },
           select: { chapter: { select: { chapterNumber: true } } },
+        })
+      : null,
+    session?.user
+      ? prisma.readingList.findUnique({
+          where: { userId_novelId: { userId: session.user.id, novelId: novel.id } },
+          select: { status: true },
         })
       : null,
   ]);
@@ -125,6 +132,11 @@ export default async function NovelDetailPage({
                 {continueLabel}
               </Link>
             )}
+            <ReadingStatusButton
+              novelId={novel.id}
+              initialStatus={(readingListItem?.status ?? null) as "READING" | "PLANNED" | "DROPPED" | "COMPLETED" | "FAVORITE" | null}
+              isLoggedIn={!!session?.user}
+            />
             <FavoriteButton
               novelId={novel.id}
               initialFavorited={!!isFavorited}

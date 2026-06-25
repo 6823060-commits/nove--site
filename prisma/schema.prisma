@@ -36,6 +36,7 @@ model User {
   progress           ReadingProgress[]
   createdNovels      Novel[]           @relation("NovelCreator")
   tickets            Ticket[]
+  readingList        ReadingList[]
   passwordResetTokens PasswordResetToken[]
 
   @@map("users")
@@ -120,6 +121,7 @@ model Novel {
   favorites Favorite[]
   comments  Comment[]
   progress  ReadingProgress[]
+  readingList ReadingList[]
 
   @@map("novels")
 }
@@ -233,4 +235,28 @@ model ReadingProgress {
 
   @@unique([userId, novelId])
   @@map("reading_progress")
+}
+
+enum ReadingListStatus {
+  READING
+  PLANNED
+  DROPPED
+  COMPLETED
+  FAVORITE
+}
+
+model ReadingList {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  novelId   String
+  novel     Novel             @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  status    ReadingListStatus
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@unique([userId, novelId])
+  @@index([userId])
+  @@index([status])
+  @@map("reading_list")
 }
