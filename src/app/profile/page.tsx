@@ -2,14 +2,14 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { formatRelativeTime, formatDate } from "@/lib/format";
-import { novelCardSelect, toNovelCard } from "@/lib/format";
+import { novelCardSelect } from "@/lib/format";
 
 const STATUS_META = {
-  READING:   { label: "Уншиж байна",  icon: "📖", color: "text-success"    },
-  PLANNED:   { label: "Төлөвлөсөн",   icon: "📋", color: "text-plum-soft"  },
-  DROPPED:   { label: "Орхисон",       icon: "⏸️", color: "text-mist"      },
-  COMPLETED: { label: "Уншиж дууссан", icon: "✅", color: "text-ember"     },
-  FAVORITE:  { label: "Дуртай",        icon: "⭐", color: "text-ember-soft" },
+  READING: { label: "Уншиж байна", icon: "📖", color: "text-success" },
+  PLANNED: { label: "Төлөвлөсөн", icon: "📋", color: "text-plum-soft" },
+  DROPPED: { label: "Хаясан", icon: "⏸️", color: "text-mist" },
+  COMPLETED: { label: "Уншиж дууссан", icon: "✅", color: "text-ember" },
+  FAVORITE: { label: "Дуртай", icon: "⭐", color: "text-ember-soft" },
 } as const;
 
 type StatusKey = keyof typeof STATUS_META;
@@ -20,81 +20,145 @@ export default async function ProfilePage({
   searchParams: Promise<{ tab?: string; status?: string }>;
 }) {
   const session = await auth();
+
   if (!session?.user) return null;
 
   const params = await searchParams;
-  const activeTab = params.tab ?? "novels";
-  const activeStatus = (params.status as StatusKey | undefined) ?? null;
 
-  const [readingListCounts, readingListItems, comments, favorites, progress] = await Promise.all([
-    prisma.readingList.groupBy({
-      by: ["status"],
-      where: { userId: session.user.id },
-      _count: { _all: true },
-    }),
-    prisma.readingList.findMany({
-      where: {
-        userId: session.user.id,
-        ...(activeStatus ? { status: activeStatus } : {}),
-      },
-      orderBy: { updatedAt: "desc" },
-      select: {
-        status: true,
-        updatedAt: true,
-        novel: {
-          select: {
-            ...novelCardSelect,
-            id: true,
-            slug: true,
-            title: true,
-            coverImage: true,
-            _count: { select: { chapters: true } },
+  const activeTab =
+    params.tab === "history" || params.tab === "comments"
+      ? params.tab
+      : "novels";
+
+  const rawStatus = params.status as StatusKey | undefined;
+
+  const activeStatus: StatusKey | null =
+    rawStatus && rawStatus in STATUS_META ? rawStatus : null;
+
+  const [readingListCounts, readingListItems, comments, progress] =
+    await Promise.all([
+      prisma.readingList.groupBy({
+        by: ["status"],
+        where: {
+          userId: session.user.id,
+          status: {
+            in: Object.keys(STATUS_META) as StatusKey[],
           },
         },
-      },
-    }),
-    activeTab === "comments"
-      ? prisma.comment.findMany({
-          where: { userId: session.user.id },
-          orderBy: { createdAt: "desc" },
-          take: 20,
-          select: {
-            id: true,
-            content: true,
-            createdAt: true,
-            novel: { select: { slug: true, title: true } },
-            chapter: { select: { chapterNumber: true, title: true } },
+        _count: {
+          _all: true,
+        },
+      }),
+
+      prisma.readingList.findMany({
+        where: {
+          userId: session.user.id,
+          status: activeStatus
+            ? activeStatus
+            : {
+                in: Object.keys(STATUS_META) as StatusKey[],
+              },
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        select: {
+          status: true,
+          updatedAt: true,
+          novel: {
+            select: {
+              ...novelCardSelect,
+              id: true,
+              slug: true,
+              title: true,
+              coverImage: true,
+              _count: {
+                select: {
+                  chapters: true,
+                },
+              },
+            },
           },
-        })
-      : Promise.resolve([]),
-    prisma.favorite.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      select: { novel: { select: novelCardSelect }, createdAt: true },
-    }),
-    prisma.readingProgress.findMany({
-      where: { userId: session.user.id },
-      orderBy: { updatedAt: "desc" },
-      take: 10,
-      select: {
-        updatedAt: true,
-        novel: { select: { slug: true, title: true, _count: { select: { chapters: true } } } },
-        chapter: { select: { chapterNumber: true, title: true } },
-      },
-    }),
-  ]);
+        },
+      }),
+
+      activeTab === "comments"
+        ? prisma.comment.findMany({
+            where: {
+              userId: session.user.id,
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 20,
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              novel: {
+                select: {
+                  slug: true,
+                  title: true,
+                },
+              },
+              chapter: {
+                select: {
+                  chapterNumber: true,
+                  title: true,
+                },
+              },
+            },
+          })
+        : Promise.resolve([]),
+
+      prisma.readingProgress.findMany({
+        where: {
+          userId: session.user.id,
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 10,
+        select: {
+          updatedAt: true,
+          novel: {
+            select: {
+              slug: true,
+              title: true,
+              _count: {
+                select: {
+                  chapters: true,
+                },
+              },
+            },
+          },
+          chapter: {
+            select: {
+              chapterNumber: true,
+              title: true,
+            },
+          },
+        },
+      }),
+    ]);
 
   const countMap = readingListCounts.reduce(
-    (acc, c) => ({ ...acc, [c.status]: c._count._all }),
+    (acc, c) => ({
+      ...acc,
+      [c.status]: c._count._all,
+    }),
     {} as Record<string, number>
   );
-  const totalReadingList = Object.values(countMap).reduce((a, b) => a + b, 0);
+
+  const totalReadingList = Object.values(countMap).reduce(
+    (a, b) => a + b,
+    0
+  );
 
   const tabs = [
-    { key: "novels",   label: "Жагсаалт",   icon: "📚" },
-    { key: "history",  label: "Унших түүх",  icon: "🕐" },
-    { key: "favorites",label: "Дуртай",      icon: "❤️" },
-    { key: "comments", label: "Сэтгэгдэл",  icon: "💬" },
+    { key: "novels", label: "Жагсаалт", icon: "📚" },
+    { key: "history", label: "Унших түүх", icon: "⏱️" },
+    { key: "comments", label: "Сэтгэгдэл", icon: "☁️" },
   ];
 
   return (
@@ -104,13 +168,17 @@ export default async function ProfilePage({
         <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-plum/30 font-display text-2xl font-bold text-plum-soft">
           {session.user.name?.charAt(0).toUpperCase()}
         </span>
+
         <div className="flex-1">
-          <h1 className="font-display text-xl font-bold text-paper">{session.user.name}</h1>
+          <h1 className="font-display text-xl font-bold text-paper">
+            {session.user.name}
+          </h1>
+
           <p className="text-sm text-mist-dim">{session.user.email}</p>
+
           <div className="mt-2 flex flex-wrap gap-3 text-xs text-mist-dim">
-            <span>📚 {totalReadingList} жагсаалтад</span>
-            <span>❤️ {favorites.length} дуртай</span>
-            <span>💬 нийт коммент</span>
+            <span>{totalReadingList} жагсаалтад</span>
+            <span>нийт коммент</span>
           </div>
         </div>
       </div>
@@ -138,21 +206,25 @@ export default async function ProfilePage({
         <div className="grid grid-cols-1 gap-5 md:grid-cols-[220px_1fr]">
           {/* Sidebar */}
           <aside className="md:sticky md:top-24 md:self-start">
-            <div className="rounded-xl border border-border bg-surface overflow-hidden">
+            <div className="overflow-hidden rounded-xl border border-border bg-surface">
               <div className="border-b border-border px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-mist-dim">Жагсаалтууд</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-mist-dim">
+                  Жагсаалтууд
+                </p>
               </div>
+
               <Link
                 href="/profile?tab=novels"
                 className={`flex items-center justify-between px-4 py-3 text-sm transition hover:bg-surface-raised ${
-                  !activeStatus ? "text-ember font-medium" : "text-mist"
+                  !activeStatus ? "font-medium text-ember" : "text-mist"
                 }`}
               >
-                <span>📚 Бүгд</span>
+                <span>Бүгд</span>
                 <span className="rounded-full bg-surface-raised px-2 py-0.5 text-xs text-mist-dim">
                   {totalReadingList}
                 </span>
               </Link>
+
               {(Object.keys(STATUS_META) as StatusKey[]).map((key) => (
                 <Link
                   key={key}
@@ -166,6 +238,7 @@ export default async function ProfilePage({
                   <span>
                     {STATUS_META[key].icon} {STATUS_META[key].label}
                   </span>
+
                   <span className="rounded-full bg-surface-raised px-2 py-0.5 text-xs text-mist-dim">
                     {countMap[key] ?? 0}
                   </span>
@@ -179,10 +252,15 @@ export default async function ProfilePage({
             {readingListItems.length > 0 ? (
               readingListItems.map((item) => {
                 const totalChapters = item.novel._count.chapters;
-                const prog = progress.find((p) => p.novel.slug === item.novel.slug);
+                const prog = progress.find(
+                  (p) => p.novel.slug === item.novel.slug
+                );
                 const currentChapter = prog?.chapter.chapterNumber ?? 0;
-                const pct = totalChapters > 0 ? Math.round((currentChapter / totalChapters) * 100) : 0;
-                const meta = STATUS_META[item.status];
+                const pct =
+                  totalChapters > 0
+                    ? Math.round((currentChapter / totalChapters) * 100)
+                    : 0;
+                const meta = STATUS_META[item.status as StatusKey];
 
                 return (
                   <Link
@@ -210,16 +288,21 @@ export default async function ProfilePage({
                     <div className="flex flex-1 flex-col justify-between">
                       <div>
                         <div className="flex items-start justify-between gap-2">
-                          <p className="font-display text-sm font-semibold text-paper hover:text-ember line-clamp-1">
+                          <p className="line-clamp-1 font-display text-sm font-semibold text-paper hover:text-ember">
                             {item.novel.title}
                           </p>
-                          <span className={`shrink-0 text-xs font-medium ${meta.color}`}>
+
+                          <span
+                            className={`shrink-0 text-xs font-medium ${meta.color}`}
+                          >
                             {meta.icon} {meta.label}
                           </span>
                         </div>
+
                         {prog && (
                           <p className="mt-0.5 text-xs text-mist-dim">
-                            Бүлэг {currentChapter} / {totalChapters} — {prog.chapter.title}
+                            Бүлэг {currentChapter} / {totalChapters} —{" "}
+                            {prog.chapter.title}
                           </p>
                         )}
                       </div>
@@ -233,6 +316,7 @@ export default async function ProfilePage({
                                 style={{ width: `${pct}%` }}
                               />
                             </div>
+
                             <div className="mt-1 flex items-center justify-between text-xs text-mist-dim">
                               <span>{pct}%</span>
                               <span>{formatRelativeTime(item.updatedAt)}</span>
@@ -246,15 +330,18 @@ export default async function ProfilePage({
               })
             ) : (
               <div className="rounded-xl border border-border bg-surface py-16 text-center">
-                <span className="text-4xl">📭</span>
+                <span className="text-4xl">📚</span>
+
                 <p className="mt-3 font-display text-lg text-paper">
-                    {activeStatus
-                      ? `${STATUS_META[activeStatus].icon} ${STATUS_META[activeStatus].label} жагсаалт хоосон байна`
-                      : "Жагсаалт хоосон байна"}
+                  {activeStatus
+                    ? `${STATUS_META[activeStatus].icon} ${STATUS_META[activeStatus].label} жагсаалт хоосон байна`
+                    : "Жагсаалт хоосон байна"}
                 </p>
+
                 <p className="mt-1 text-sm text-mist-dim">
                   Новел харахдаа &ldquo;Жагсаалтад нэмэх&rdquo; товчоор нэмнэ үү
                 </p>
+
                 <Link
                   href="/catalog"
                   className="mt-4 inline-block rounded-lg bg-ember px-5 py-2.5 text-sm font-semibold text-ink-deep hover:bg-ember-soft"
@@ -270,13 +357,21 @@ export default async function ProfilePage({
       {/* History tab */}
       {activeTab === "history" && (
         <div className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-semibold text-paper">Унших түүх</h2>
+          <h2 className="font-display text-lg font-semibold text-paper">
+            Унших түүх
+          </h2>
+
           {progress.length > 0 ? (
             progress.map((item) => {
               const pct =
                 item.novel._count.chapters > 0
-                  ? Math.round((item.chapter.chapterNumber / item.novel._count.chapters) * 100)
+                  ? Math.round(
+                      (item.chapter.chapterNumber /
+                        item.novel._count.chapters) *
+                        100
+                    )
                   : 0;
+
               return (
                 <Link
                   key={item.novel.slug}
@@ -288,78 +383,44 @@ export default async function ProfilePage({
                       <p className="font-display text-sm font-semibold text-paper">
                         {item.novel.title}
                       </p>
-                      <p className="text-xs text-mist-dim">{formatRelativeTime(item.updatedAt)}</p>
+
+                      <p className="text-xs text-mist-dim">
+                        {formatRelativeTime(item.updatedAt)}
+                      </p>
                     </div>
+
                     <p className="mt-0.5 text-xs text-mist">
                       Бүлэг {item.chapter.chapterNumber}: {item.chapter.title}
                     </p>
+
                     <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-border">
                       <div
                         className="h-full rounded-full bg-ember"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <p className="mt-1 text-right text-xs text-mist-dim">{pct}%</p>
+
+                    <p className="mt-1 text-right text-xs text-mist-dim">
+                      {pct}%
+                    </p>
                   </div>
                 </Link>
               );
             })
           ) : (
             <div className="rounded-xl border border-border bg-surface py-16 text-center">
-              <span className="text-4xl">📖</span>
-              <p className="mt-3 font-display text-lg text-paper">Унших түүх хоосон байна</p>
-              <Link href="/catalog" className="mt-4 inline-block text-sm text-ember hover:underline">
+              <span className="text-4xl">⏱️</span>
+
+              <p className="mt-3 font-display text-lg text-paper">
+                Унших түүх хоосон байна
+              </p>
+
+              <Link
+                href="/catalog"
+                className="mt-4 inline-block text-sm text-ember hover:underline"
+              >
                 Новел унших →
               </Link>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Favorites tab */}
-      {activeTab === "favorites" && (
-        <div className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-semibold text-paper">
-            Дуртай новел <span className="text-mist-dim">({favorites.length})</span>
-          </h2>
-          {favorites.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {favorites.map(({ novel }) => {
-                const card = toNovelCard(novel);
-                return (
-                  <Link
-                    key={card.slug}
-                    href={`/novels/${card.slug}`}
-                    className="group relative overflow-hidden rounded-xl border border-border bg-surface transition hover:border-ember-dim"
-                  >
-                    <div className="relative aspect-[2/3] w-full overflow-hidden bg-gradient-to-br from-plum/40 to-ink-deep">
-                      {card.coverImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={card.coverImage}
-                          alt={card.title}
-                          className="h-full w-full object-cover transition group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <span className="font-display text-4xl text-paper/60">{card.title.charAt(0)}</span>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-ink-deep via-transparent to-transparent" />
-                      <div className="absolute bottom-0 p-2">
-                        <p className="font-display text-xs font-semibold text-paper line-clamp-2 group-hover:text-ember">
-                          {card.title}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-border bg-surface py-16 text-center">
-              <span className="text-4xl">❤️</span>
-              <p className="mt-3 font-display text-lg text-paper">Дуртай новел байхгүй</p>
             </div>
           )}
         </div>
@@ -368,10 +429,16 @@ export default async function ProfilePage({
       {/* Comments tab */}
       {activeTab === "comments" && (
         <div className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-semibold text-paper">Сэтгэгдлүүд</h2>
+          <h2 className="font-display text-lg font-semibold text-paper">
+            Сэтгэгдлүүд
+          </h2>
+
           {comments.length > 0 ? (
             comments.map((comment) => (
-              <div key={comment.id} className="rounded-xl border border-border bg-surface p-4">
+              <div
+                key={comment.id}
+                className="rounded-xl border border-border bg-surface p-4"
+              >
                 <div className="flex items-center justify-between">
                   <Link
                     href={
@@ -382,19 +449,27 @@ export default async function ProfilePage({
                     className="text-sm font-medium text-ember hover:underline"
                   >
                     {comment.novel.title}
-                    {comment.chapter && ` — Бүлэг ${comment.chapter.chapterNumber}`}
+                    {comment.chapter &&
+                      ` — Бүлэг ${comment.chapter.chapterNumber}`}
                   </Link>
+
                   <span className="text-xs text-mist-dim">
                     {formatDate(comment.createdAt)}
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-mist line-clamp-3">{comment.content}</p>
+
+                <p className="mt-2 line-clamp-3 text-sm text-mist">
+                  {comment.content}
+                </p>
               </div>
             ))
           ) : (
             <div className="rounded-xl border border-border bg-surface py-16 text-center">
-              <span className="text-4xl">💬</span>
-              <p className="mt-3 font-display text-lg text-paper">Сэтгэгдэл байхгүй байна</p>
+              <span className="text-4xl">☁️</span>
+
+              <p className="mt-3 font-display text-lg text-paper">
+                Сэтгэгдэл байхгүй байна
+              </p>
             </div>
           )}
         </div>

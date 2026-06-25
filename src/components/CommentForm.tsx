@@ -57,6 +57,7 @@ export default function CommentForm({
         placeholder="Сэтгэгдэл бичих..."
         rows={3}
         className="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-paper placeholder:text-mist-dim focus:border-ember focus:outline-none"
+        data-has-listeners="true"
       />
       {error && <p className="text-xs text-danger">{error}</p>}
       <button

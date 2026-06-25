@@ -8,9 +8,7 @@ export default async function Header() {
 
   const navLinks = [
     { href: "/catalog", label: "Каталог" },
-    { href: "/novels", label: "Бүх новелууд" },
-    { href: "/novels?status=ONGOING", label: "Үргэлжилж буй" },
-    { href: "/novels?status=COMPLETED", label: "Дууссан" },
+     { href: "/novels", label: "Хайлт" },
   ];
 
   return (
