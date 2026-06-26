@@ -8,6 +8,7 @@ type ChapterInitial = {
   chapterNumber: number;
   title: string;
   content: string;
+  isPremium: boolean;
 };
 
 export default function ChapterForm({
@@ -29,6 +30,7 @@ export default function ChapterForm({
   );
   const [title, setTitle] = useState(initial?.title ?? "");
   const [content, setContent] = useState(initial?.content ?? "");
+  const [isPremium, setIsPremium] = useState(initial?.isPremium ?? false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +39,7 @@ export default function ChapterForm({
     setError("");
     setLoading(true);
 
-    const payload = { novelId, chapterNumber, title, content };
+    const payload = { novelId, chapterNumber, title, content, isPremium };
     const res = await fetch(isEdit ? `/api/chapters/${initial!.id}` : "/api/chapters", {
       method: isEdit ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -93,6 +95,21 @@ export default function ChapterForm({
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
+
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setIsPremium((v) => !v)}
+          className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
+            isPremium
+              ? "border-ember bg-ember/10 text-ember"
+              : "border-border text-mist hover:border-ember/50"
+          }`}
+        >
+          <span>👑</span>
+          {isPremium ? "Premium бүлэг" : "Энгийн бүлэг (Premium биш)"}
+        </button>
+      </div>
 
       <div className="flex gap-3">
         <button

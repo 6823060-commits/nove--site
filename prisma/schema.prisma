@@ -8,6 +8,7 @@ datasource db {
 
 enum Role {
   USER
+  EDITOR
   ADMIN
 }
 
@@ -17,42 +18,76 @@ enum NovelStatus {
   HIATUS
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  role          Role      @default(USER)
-  loginAttempts Int       @default(0)
-  lockedUntil   DateTime?
-  createdAt     DateTime  @default(now())
-
-  accounts           Account[]
-  sessions           Session[]
-  favorites          Favorite[]
-  comments           Comment[]
-  progress           ReadingProgress[]
-  createdNovels      Novel[]           @relation("NovelCreator")
-  tickets            Ticket[]
-  readingList        ReadingList[]
-  passwordResetTokens PasswordResetToken[]
-
-  @@map("users")
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELLED
 }
 
-model PasswordResetToken {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique
-  expires   DateTime
-  used      Boolean  @default(false)
-  createdAt DateTime @default(now())
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
 
-  @@index([token])
-  @@map("password_reset_tokens")
+enum ReadingListStatus {
+  READING
+  PLANNED
+  DROPPED
+  COMPLETED
+  FAVORITE
+}
+
+enum TicketStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketType {
+  BUG
+  FEATURE
+  AUTHOR_REQUEST
+  NOVEL_REQUEST
+  OTHER
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  emailVerified    DateTime?
+  image            String?
+  passwordHash     String?
+  role             Role      @default(USER)
+  loginAttempts    Int       @default(0)
+  lockedUntil      DateTime?
+  isPremium        Boolean   @default(false)
+  premiumExpiresAt DateTime?
+  createdAt        DateTime  @default(now())
+
+  accounts            Account[]
+  sessions            Session[]
+  favorites           Favorite[]
+  comments            Comment[]
+  progress            ReadingProgress[]
+  createdNovels       Novel[]              @relation("NovelCreator")
+  tickets             Ticket[]
+  readingList         ReadingList[]
+  passwordResetTokens PasswordResetToken[]
+  subscriptions       Subscription[]
+
+  @@map("users")
 }
 
 model Account {
@@ -78,8 +113,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
@@ -91,6 +125,19 @@ model VerificationToken {
 
   @@id([identifier, token])
   @@map("verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expires   DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@map("password_reset_tokens")
 }
 
 model Genre {
@@ -116,11 +163,11 @@ model Novel {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  chapters  Chapter[]
-  genres    NovelGenre[]
-  favorites Favorite[]
-  comments  Comment[]
-  progress  ReadingProgress[]
+  chapters    Chapter[]
+  genres      NovelGenre[]
+  favorites   Favorite[]
+  comments    Comment[]
+  progress    ReadingProgress[]
   readingList ReadingList[]
 
   @@map("novels")
@@ -144,6 +191,7 @@ model Chapter {
   title         String
   content       String
   views         Int      @default(0)
+  isPremium     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -183,26 +231,80 @@ model Favorite {
   @@map("favorites")
 }
 
-enum TicketStatus {
-  PENDING
-  IN_PROGRESS
-  RESOLVED
-  CLOSED
+model ReadingProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  novelId   String
+  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  chapterId String
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, novelId])
+  @@map("reading_progress")
 }
 
-enum TicketType {
-  BUG
-  FEATURE
-  AUTHOR_REQUEST
-  NOVEL_REQUEST
-  OTHER
+model ReadingList {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  novelId   String
+  novel     Novel             @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  status    ReadingListStatus
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@unique([userId, novelId])
+  @@index([userId])
+  @@index([status])
+  @@map("reading_list")
 }
 
-enum TicketPriority {
-  LOW
-  NORMAL
-  HIGH
-  URGENT
+model PremiumPlan {
+  id            String         @id @default(cuid())
+  name          String
+  duration      Int
+  price         Int
+  description   String?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  subscriptions Subscription[]
+
+  @@map("premium_plans")
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId    String
+  plan      PremiumPlan        @relation(fields: [planId], references: [id])
+  startDate DateTime           @default(now())
+  endDate   DateTime
+  status    SubscriptionStatus @default(PENDING)
+  createdAt DateTime           @default(now())
+  payment   Payment?
+
+  @@index([userId])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  subscriptionId String        @unique
+  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amount         Int
+  currency       String        @default("MNT")
+  status         PaymentStatus @default(PENDING)
+  method         String?
+  transactionId  String?
+  qpayInvoiceId  String?
+  qpayQrData     String?
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+
+  @@map("payments")
 }
 
 model Ticket {
@@ -221,42 +323,4 @@ model Ticket {
   @@index([userId])
   @@index([status])
   @@map("tickets")
-}
-
-model ReadingProgress {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  novelId   String
-  novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
-  chapterId String
-  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, novelId])
-  @@map("reading_progress")
-}
-
-enum ReadingListStatus {
-  READING
-  PLANNED
-  DROPPED
-  COMPLETED
-  FAVORITE
-}
-
-model ReadingList {
-  id        String            @id @default(cuid())
-  userId    String
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  novelId   String
-  novel     Novel             @relation(fields: [novelId], references: [id], onDelete: Cascade)
-  status    ReadingListStatus
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-
-  @@unique([userId, novelId])
-  @@index([userId])
-  @@index([status])
-  @@map("reading_list")
 }

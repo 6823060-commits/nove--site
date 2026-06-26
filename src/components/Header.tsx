@@ -1,14 +1,29 @@
 import Link from "next/link";
 import { auth, signOut } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import MobileNav from "@/components/MobileNav";
 
 export default async function Header() {
   const session = await auth();
   const user = session?.user;
 
+  const userPremium = user
+    ? await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { isPremium: true, premiumExpiresAt: true },
+      })
+    : null;
+
+  const hasPremium =
+    userPremium?.isPremium &&
+    (!userPremium.premiumExpiresAt || userPremium.premiumExpiresAt > new Date());
+
   const navLinks = [
     { href: "/catalog", label: "Каталог" },
-     { href: "/novels", label: "Хайлт" },
+    { href: "/novels", label: "Бүх новелууд" },
+    { href: "/novels?status=ONGOING", label: "Үргэлжилж буй" },
+    { href: "/novels?status=COMPLETED", label: "Дууссан" },
+    { href: "/premium", label: "👑 Premium" },
   ];
 
   return (
@@ -19,7 +34,7 @@ export default async function Header() {
             🕯️
           </span>
           <span className="font-display text-lg font-bold tracking-wide text-paper sm:text-xl">
-            Новел
+            Шөнийн Туужr
           </span>
         </Link>
 
@@ -28,7 +43,11 @@ export default async function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm text-mist transition hover:text-ember"
+              className={`text-sm transition ${
+                link.href === "/premium"
+                  ? "text-ember hover:text-ember-soft"
+                  : "text-mist hover:text-ember"
+              }`}
             >
               {link.label}
             </Link>
@@ -38,6 +57,14 @@ export default async function Header() {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
+              {((user.role as string) === "EDITOR") && (
+                <Link
+                  href="/editor"
+                  className="text-sm text-plum-soft transition hover:text-ember"
+                >
+                  Редактор
+                </Link>
+              )}
               {user.role === "ADMIN" && (
                 <Link
                   href="/admin"
@@ -45,6 +72,11 @@ export default async function Header() {
                 >
                   Удирдлага
                 </Link>
+              )}
+              {hasPremium && (
+                <span className="rounded-full bg-ember/10 px-2.5 py-0.5 text-xs font-medium text-ember">
+                  👑 Premium
+                </span>
               )}
               <Link
                 href="/tickets"
@@ -94,6 +126,8 @@ export default async function Header() {
           navLinks={navLinks}
           isLoggedIn={!!user}
           isAdmin={user?.role === "ADMIN"}
+          isEditor={(user?.role as string) === "EDITOR"}
+          hasPremium={!!hasPremium}
           userName={user?.name ?? null}
         />
       </div>

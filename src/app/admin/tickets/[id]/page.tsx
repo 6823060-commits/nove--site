@@ -21,7 +21,7 @@ const typeLabel: Record<string, string> = {
   BUG: "🐛 Алдаа засах",
   FEATURE: "✨ Нэмэлт өөрчлөлт",
   AUTHOR_REQUEST: "✍️ Зохиолч болох хүсэлт",
-  NOVEL_REQUEST: "📖 Тууж нэмэх хүсэлт",
+  NOVEL_REQUEST: "📖 Новел нэмэх хүсэлт",
   OTHER: "💬 Бусад",
 };
 const priorityLabel: Record<string, string> = {
@@ -61,7 +61,7 @@ export default async function AdminTicketDetailPage({
           ← Хүсэлтүүд
         </Link>
         <span className="text-mist-dim">/</span>
-        <span className="text-sm text-mist-dim truncate max-w-[200px]">
+        <span className="text-sm text-mist-dim truncate max-w-50">
           {ticket.title}
         </span>
       </div>

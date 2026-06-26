@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import ReadingProgressBar from "@/components/ReadingProgressBar";
 import CommentSection from "@/components/CommentSection";
+import PremiumLock from "@/components/PremiumLock";
 
 function ChapterNav({
   slug,
@@ -82,7 +83,7 @@ export default async function ChapterPage({
   const [chapter, comments] = await Promise.all([
     prisma.chapter.findUnique({
       where: { id: chapterMeta.id },
-      select: { id: true, title: true, content: true, chapterNumber: true },
+      select: { id: true, title: true, content: true, chapterNumber: true, isPremium: true },
     }),
     prisma.comment.findMany({
       where: { chapterId: chapterMeta.id },
@@ -98,6 +99,24 @@ export default async function ChapterPage({
   ]);
 
   if (!chapter) notFound();
+
+  // Premium check
+  if (chapter.isPremium) {
+    const userPremium = session?.user
+      ? await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { isPremium: true, premiumExpiresAt: true },
+        })
+      : null;
+
+    const hasPremium =
+      userPremium?.isPremium &&
+      (!userPremium.premiumExpiresAt || userPremium.premiumExpiresAt > new Date());
+
+    if (!hasPremium) {
+      return <PremiumLock chapterNumber={chapter.chapterNumber} novelTitle={novel.title} />;
+    }
+  }
 
   prisma.chapter.update({ where: { id: chapter.id }, data: { views: { increment: 1 } } }).catch(() => {});
 

@@ -35,7 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Имэйл", type: "email" },
         password: { label: "Нууц үг", type: "password" },
       },
-      async authorize(rawCredentials) {
+      async authorize(rawCredentials, _request) {
         const parsed = credentialsSchema.safeParse(rawCredentials);
         if (!parsed.success) return null;
 
@@ -75,13 +75,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           data: { loginAttempts: 0, lockedUntil: null },
         });
 
-        return {
+        // Store role in name field hack - actually store in token via jwt callback
+        const result = {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
-          image: user.image ?? undefined,
+          image: user.image ?? null,
+          // Store role in a custom field; jwt callback will pick it up
+          role: user.role as string,
         };
+        return result as unknown as import("next-auth").User;
       },
     }),
     ...oauthProviders,

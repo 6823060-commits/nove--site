@@ -8,6 +8,7 @@ const bodySchema = z.object({
   chapterNumber: z.coerce.number().int().positive(),
   title: z.string().min(1),
   content: z.string().min(1),
+  isPremium: z.boolean().default(false),
 });
 
 export async function POST(request: Request) {

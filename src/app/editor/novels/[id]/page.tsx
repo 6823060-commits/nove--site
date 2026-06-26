@@ -1,15 +1,18 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import NovelForm from "@/components/admin/NovelForm";
 import DeleteButton from "@/components/admin/DeleteButton";
 
-export default async function EditNovelPage({
+export default async function EditorEditNovelPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
+  if (!session?.user) redirect("/login");
 
   const [novel, genres] = await Promise.all([
     prisma.novel.findUnique({
@@ -22,6 +25,7 @@ export default async function EditNovelPage({
         description: true,
         coverImage: true,
         status: true,
+        createdById: true,
         genres: { select: { genreId: true } },
         chapters: {
           orderBy: { chapterNumber: "asc" },
@@ -33,6 +37,11 @@ export default async function EditNovelPage({
   ]);
 
   if (!novel) notFound();
+
+  // Editors can only edit their own novels
+  if ((session.user.role as string) === "EDITOR" && novel.createdById !== session.user.id) {
+    redirect("/editor");
+  }
 
   const nextChapterNumber =
     novel.chapters.length > 0
@@ -61,7 +70,7 @@ export default async function EditNovelPage({
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold text-paper">Бүлгүүд</h2>
           <Link
-            href={`/admin/novels/${novel.id}/chapters/new`}
+            href={`/editor/novels/${novel.id}/chapters/new`}
             className="rounded-lg bg-ember px-4 py-2 text-sm font-semibold text-ink-deep transition hover:bg-ember-soft"
           >
             + Шинэ бүлэг
@@ -84,28 +93,28 @@ export default async function EditNovelPage({
               </span>
               <div className="flex gap-2">
                 <Link
-                  href={`/admin/novels/${novel.id}/chapters/${chapter.id}/edit`}
+                  href={`/editor/novels/${novel.id}/chapters/${chapter.id}/edit`}
                   className="rounded-lg border border-border px-3 py-1.5 text-xs text-mist hover:border-ember hover:text-ember"
                 >
                   Засах
                 </Link>
                 <DeleteButton
                   url={`/api/chapters/${chapter.id}`}
-                  confirmText={`Бүлэг ${chapter.chapterNumber}-ийг устгах уу?`}
+                  confirmText={`Бүлэг ${chapter.chapterNumber} устгах уу?`}
                 />
               </div>
             </div>
           ))}
           {novel.chapters.length === 0 && (
             <p className="px-4 py-8 text-center text-sm text-mist-dim">
-              Бүлэг хараахан нэмэгдээгүй байна.
+              Бүлэг нэмэгдээгүй байна.
             </p>
           )}
         </div>
+        <p className="mt-2 text-xs text-mist-dim">
+          Дараагийн дугаар: {nextChapterNumber}
+        </p>
       </div>
-      <p className="mt-2 text-xs text-mist-dim">
-        Дараагийн санал болгох дугаар: {nextChapterNumber}
-      </p>
     </div>
   );
 }

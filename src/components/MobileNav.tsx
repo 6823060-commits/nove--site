@@ -10,11 +10,15 @@ export default function MobileNav({
   navLinks,
   isLoggedIn,
   isAdmin,
+  isEditor,
+  hasPremium,
   userName,
 }: {
   navLinks: NavLink[];
   isLoggedIn: boolean;
   isAdmin: boolean;
+  isEditor?: boolean;
+  hasPremium?: boolean;
   userName: string | null;
 }) {
   const [open, setOpen] = useState(false);
@@ -55,6 +59,15 @@ export default function MobileNav({
             <div className="my-1 h-px bg-border" />
             {isLoggedIn ? (
               <>
+                {isEditor && (
+                  <Link
+                    href="/editor"
+                    onClick={() => setOpen(false)}
+                    className="text-sm text-plum-soft transition hover:text-ember"
+                  >
+                    Редактор
+                  </Link>
+                )}
                 {isAdmin && (
                   <Link
                     href="/admin"
@@ -63,6 +76,9 @@ export default function MobileNav({
                   >
                     Удирдлага
                   </Link>
+                )}
+                {hasPremium && (
+                  <span className="text-xs font-medium text-ember">👑 Premium гишүүн</span>
                 )}
                 <Link
                   href="/profile"
