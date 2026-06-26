@@ -20,9 +20,6 @@ export default async function Header() {
 
   const navLinks = [
     { href: "/catalog", label: "Каталог" },
-    { href: "/novels", label: "Бүх новелууд" },
-    { href: "/novels?status=ONGOING", label: "Үргэлжилж буй" },
-    { href: "/novels?status=COMPLETED", label: "Дууссан" },
     { href: "/premium", label: "👑 Premium" },
   ];
 
@@ -34,11 +31,11 @@ export default async function Header() {
             🕯️
           </span>
           <span className="font-display text-lg font-bold tracking-wide text-paper sm:text-xl">
-            Шөнийн Туужr
+           Новел
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden items-center gap-5 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -52,6 +49,25 @@ export default async function Header() {
               {link.label}
             </Link>
           ))}
+
+          {/* Search bar */}
+          <form action="/catalog" method="get" className="flex items-center">
+            <div className="relative">
+              <input
+                name="q"
+                type="text"
+                placeholder="Хайх..."
+                className="h-8 w-44 rounded-full border border-border bg-surface pl-8 pr-3 text-xs text-paper placeholder:text-mist-dim focus:border-ember focus:outline-none focus:w-56 transition-all"
+              />
+              <svg
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-mist-dim"
+                width="13" height="13" viewBox="0 0 24 24" fill="none"
+              >
+                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+                <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </div>
+          </form>
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">

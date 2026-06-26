@@ -18,7 +18,7 @@ const typeLabel: Record<string, string> = {
   BUG: "🐛 Алдаа",
   FEATURE: "✨ Өөрчлөлт",
   AUTHOR_REQUEST: "✍️ Зохиолч",
-  NOVEL_REQUEST: "📖 Тууж",
+  NOVEL_REQUEST: "📖 Новел",
   OTHER: "💬 Бусад",
 };
 const priorityColor: Record<string, string> = {

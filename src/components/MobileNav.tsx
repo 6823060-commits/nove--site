@@ -46,6 +46,25 @@ export default function MobileNav({
       {open && (
         <div className="absolute inset-x-0 top-full border-b border-border bg-ink-deep px-4 py-4 shadow-xl">
           <nav className="flex flex-col gap-3">
+            {/* Mobile search */}
+            <form action="/catalog" method="get" className="flex items-center gap-0 mb-1">
+              <input
+                name="q"
+                type="text"
+                placeholder="Хайх..."
+                className="flex-1 h-9 rounded-l-lg border border-border bg-surface px-3 text-sm text-paper placeholder:text-mist-dim focus:border-ember focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="flex h-9 items-center rounded-r-lg bg-ember px-3 text-sm text-ink-deep hover:bg-ember-soft"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+                  <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </form>
+            <div className="h-px bg-border" />
             {navLinks.map((link) => (
               <Link
                 key={link.href}
