@@ -77,7 +77,7 @@ export default async function NovelDetailPage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-[220px_1fr]">
-        <div className="relative mx-auto h-72 w-48 overflow-hidden rounded-xl bg-gradient-to-br from-plum/40 to-ink-deep shadow-xl md:mx-0 md:h-80 md:w-full">
+        <div className="relative mx-auto h-72 w-48 overflow-hidden rounded-xl bg-linear-to-br from-plum/40 to-ink-deep shadow-xl md:mx-0 md:h-80 md:w-full">
           {novel.coverImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={novel.coverImage} alt={novel.title} className="h-full w-full object-cover" />

@@ -93,7 +93,7 @@ export default async function AdminTicketsPage() {
           <tbody className="divide-y divide-border">
             {tickets.map((ticket) => (
               <tr key={ticket.id} className="hover:bg-surface-raised">
-                <td className="max-w-[200px] truncate px-4 py-3 font-medium text-paper">
+                <td className="max-w-50 truncate px-4 py-3 font-medium text-paper">
                   {ticket.title}
                 </td>
                 <td className="px-4 py-3">
