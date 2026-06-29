@@ -88,6 +88,8 @@ export default async function Header() {
               type="text"
               placeholder="Новел хайх..."
               className="h-8 w-full rounded-full border border-border bg-surface pl-8 pr-3 text-xs text-paper placeholder:text-mist-dim focus:border-ember focus:outline-none transition-all"
+            data-has-listeners="true"
+
             />
             <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-mist-dim"
               width="13" height="13" viewBox="0 0 24 24" fill="none">

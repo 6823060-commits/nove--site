@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
-import FavoriteButton from "@/components/FavoriteButton";
 import ReadingStatusButton from "@/components/ReadingStatusButton";
 import CommentSection from "@/components/CommentSection";
 
@@ -37,7 +36,6 @@ export default async function NovelDetailPage({
         orderBy: { chapterNumber: "asc" },
         select: { id: true, chapterNumber: true, title: true, createdAt: true, isPremium: true },
       },
-      _count: { select: { favorites: true } },
       comments: {
         where: { chapterId: null },
         orderBy: { createdAt: "desc" },
@@ -56,29 +54,25 @@ export default async function NovelDetailPage({
 
   prisma.novel.update({ where: { id: novel.id }, data: { views: { increment: 1 } } }).catch(() => {});
 
-  const [isFavorited, progress, readingListItem] = await Promise.all([
-    session?.user
-      ? prisma.favorite.findUnique({
-          where: { userId_novelId: { userId: session.user.id, novelId: novel.id } },
-        })
-      : null,
-    session?.user
-      ? prisma.readingProgress.findUnique({
-          where: { userId_novelId: { userId: session.user.id, novelId: novel.id } },
-          select: { chapter: { select: { chapterNumber: true } } },
-        })
-      : null,
-    session?.user
-      ? prisma.readingList.findUnique({
-          where: { userId_novelId: { userId: session.user.id, novelId: novel.id } },
-          select: { status: true },
-        })
-      : null,
-  ]);
+  const [progress, readingListItem] = await Promise.all([
+  session?.user
+    ? prisma.readingProgress.findUnique({
+        where: { userId_novelId: { userId: session.user.id, novelId: novel.id } },
+        select: { chapter: { select: { chapterNumber: true } } },
+      })
+    : null,
+  session?.user
+    ? prisma.readingList.findUnique({
+        where: { userId_novelId: { userId: session.user.id, novelId: novel.id } },
+        select: { status: true },
+      })
+    : null,
+]);
 
   const firstChapter = novel.chapters[0];
   const continueChapter = progress?.chapter.chapterNumber ?? firstChapter?.chapterNumber;
   const continueLabel = progress ? "Үргэлжлүүлэн унших" : "Эхнээс унших";
+
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -133,16 +127,19 @@ export default async function NovelDetailPage({
               </Link>
             )}
             <ReadingStatusButton
-              novelId={novel.id}
-              initialStatus={(readingListItem?.status ?? null) as "READING" | "PLANNED" | "DROPPED" | "COMPLETED" | "FAVORITE" | null}
-              isLoggedIn={!!session?.user}
-            />
-            <FavoriteButton
-              novelId={novel.id}
-              initialFavorited={!!isFavorited}
-              isLoggedIn={!!session?.user}
-              favoriteCount={novel._count.favorites}
-            />
+  novelId={novel.id}
+  initialStatus={
+    (readingListItem?.status ?? null) as
+      | "READING"
+      | "PLANNED"
+      | "DROPPED"
+      | "COMPLETED"
+      | "FAVORITE"
+      | null
+  }
+  isLoggedIn={!!session?.user}
+/>
+            
           </div>
         </div>
       </div>
