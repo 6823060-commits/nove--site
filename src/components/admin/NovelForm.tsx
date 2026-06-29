@@ -156,6 +156,7 @@ export default function NovelForm({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-paper focus:border-ember focus:outline-none"
+        data-has-listeners="true"
         />
       </div>
 
