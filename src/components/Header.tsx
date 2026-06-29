@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import MobileNav from "@/components/MobileNav";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default async function Header() {
   const session = await auth();
@@ -19,92 +20,113 @@ export default async function Header() {
     (!userPremium.premiumExpiresAt || userPremium.premiumExpiresAt > new Date());
 
   const navLinks = [
-    { href: "/catalog", label: "Каталог" },
-    { href: "/premium", label: "👑 Premium" },
+    { href: "/",         label: "Нүүр",     icon: "🏠" },
+    { href: "/catalog",  label: "Каталог",  icon: "📚" },
+    { href: "/profile",  label: "Хадгалсан", icon: "🔖" },
+    { href: "/premium",  label: "👑 Premium", icon: "" },
   ];
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-ink-deep/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+
+        {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span className="text-xl" aria-hidden>
-            🕯️
-          </span>
-          <span className="font-display text-lg font-bold tracking-wide text-paper sm:text-xl">
-           Новел
+          <span className="text-xl" aria-hidden>🕯️</span>
+          <span className="font-display text-lg font-bold tracking-wide text-paper sm:text-xl hidden sm:block">
+            Новел
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-5 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`text-sm transition ${
-                link.href === "/premium"
-                  ? "text-ember hover:text-ember-soft"
-                  : "text-mist hover:text-ember"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-
-          {/* Search bar */}
-          <form action="/catalog" method="get" className="flex items-center">
-            <div className="relative">
-              <input
-                name="q"
-                type="text"
-                placeholder="Хайх..."
-                className="h-8 w-44 rounded-full border border-border bg-surface pl-8 pr-3 text-xs text-paper placeholder:text-mist-dim focus:border-ember focus:outline-none focus:w-56 transition-all"
-              />
-              <svg
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-mist-dim"
-                width="13" height="13" viewBox="0 0 24 24" fill="none"
-              >
-                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-                <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </div>
-          </form>
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-1 md:flex ml-2">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-mist transition hover:bg-surface hover:text-paper"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5Z"
+                stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+            </svg>
+            Нүүр
+          </Link>
+          <Link
+            href="/catalog"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-mist transition hover:bg-surface hover:text-paper"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <path d="M4 19V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v13" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M4 19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M9 8h6M9 12h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            Каталог
+          </Link>
+          <Link
+            href="/profile?tab=novels"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-mist transition hover:bg-surface hover:text-paper"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16Z"
+                stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+            </svg>
+            Хадгалсан
+          </Link>
+          <Link
+            href="/premium"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-ember transition hover:bg-ember/10"
+          >
+            👑 Premium
+          </Link>
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        {/* Search */}
+        <form action="/catalog" method="get" className="hidden md:flex flex-1 max-w-xs ml-auto">
+          <div className="relative w-full">
+            <input
+              name="q"
+              type="text"
+              placeholder="Новел хайх..."
+              className="h-8 w-full rounded-full border border-border bg-surface pl-8 pr-3 text-xs text-paper placeholder:text-mist-dim focus:border-ember focus:outline-none transition-all"
+            />
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-mist-dim"
+              width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+              <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </div>
+        </form>
+
+        {/* Right side */}
+        <div className="hidden items-center gap-2 md:flex ml-2">
+          {/* Theme toggle */}
+          <ThemeToggle />
+
           {user ? (
             <>
               {((user.role as string) === "EDITOR") && (
-                <Link
-                  href="/editor"
-                  className="text-sm text-plum-soft transition hover:text-ember"
-                >
+                <Link href="/editor" className="text-sm text-plum-soft transition hover:text-ember">
                   Редактор
                 </Link>
               )}
               {user.role === "ADMIN" && (
-                <Link
-                  href="/admin"
-                  className="text-sm text-plum-soft transition hover:text-ember"
-                >
+                <Link href="/admin" className="text-sm text-plum-soft transition hover:text-ember">
                   Удирдлага
                 </Link>
               )}
               {hasPremium && (
-                <span className="rounded-full bg-ember/10 px-2.5 py-0.5 text-xs font-medium text-ember">
-                  👑 Premium
+                <span className="rounded-full bg-ember/10 px-2 py-0.5 text-xs font-medium text-ember">
+                  👑
                 </span>
               )}
-              <Link
-                href="/tickets"
-                className="text-sm text-mist transition hover:text-ember"
-              >
+              <Link href="/tickets" className="text-sm text-mist transition hover:text-ember">
                 Хүсэлт
               </Link>
               <Link
                 href="/profile"
-                className="text-sm text-mist transition hover:text-ember"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-plum/30 text-sm font-semibold text-plum-soft transition hover:bg-plum/50"
               >
-                {user.name}
+                {user.name?.charAt(0).toUpperCase()}
               </Link>
               <form
                 action={async () => {
@@ -114,7 +136,7 @@ export default async function Header() {
               >
                 <button
                   type="submit"
-                  className="rounded-full border border-border px-4 py-1.5 text-sm text-mist transition hover:border-ember hover:text-ember"
+                  className="rounded-full border border-border px-3 py-1.5 text-xs text-mist transition hover:border-ember hover:text-ember"
                 >
                   Гарах
                 </button>
@@ -122,10 +144,7 @@ export default async function Header() {
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="text-sm text-mist transition hover:text-ember"
-              >
+              <Link href="/login" className="text-sm text-mist transition hover:text-ember">
                 Нэвтрэх
               </Link>
               <Link

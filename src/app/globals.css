@@ -32,6 +32,25 @@
   --color-success: #6fae8c;
 }
 
+/* Цагаан (гэрэл) горим */
+[data-theme="light"] {
+  --color-ink: #f5f3ef;
+  --color-ink-deep: #ffffff;
+  --color-surface: #ede9e0;
+  --color-surface-raised: #e2ddd3;
+  --color-ember: #c07820;
+  --color-ember-soft: #d4892a;
+  --color-ember-dim: #a86510;
+  --color-plum: #6b5fa0;
+  --color-plum-soft: #7b6db0;
+  --color-paper: #1a1826;
+  --color-mist: #4a4660;
+  --color-mist-dim: #7a7690;
+  --color-border: #ccc8be;
+  --color-danger: #c0392b;
+  --color-success: #27ae60;
+}
+
 @theme inline {
   --color-ink: var(--color-ink);
   --color-ink-deep: var(--color-ink-deep);
